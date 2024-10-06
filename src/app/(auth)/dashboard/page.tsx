@@ -5,13 +5,13 @@ import {
   CircularProgressbarWithChildren,
 } from "react-circular-progressbar";
 import Image from "next/image";
-import clsx from "clsx";
 import Link from "next/link";
+import clsx from "clsx";
 import { useGetAuth } from "@/api/auth";
 import PageLoader from "@/components/loader";
 import { useSession } from "next-auth/react";
 import Todo from "@/containers/dashboard/todo";
-import { ArrowRight, EyeOff } from "lucide-react";
+import { ArrowRight, EyeOff, ArrowDown, ArrowDownUp, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import Topbar from "@/containers/dashboard/top-bar";
 import {
@@ -36,6 +36,9 @@ import { useRouter } from "next/navigation";
 import TaskTodo from "@/containers/dashboard/task-todo";
 import TaskModal, { TTasks } from "@/components/modal/task-modal";
 import TaskDetailsModal from "@/components/modal/task-modal";
+import { ArrowDownIcon, LockClosedIcon } from "@heroicons/react/24/solid";
+import Button from "@/components/button";
+import InputBox from "@/components/questionnarie/input-box";
 
 const Dashboard = () => {
   const session = useSession();
@@ -66,6 +69,21 @@ const Dashboard = () => {
   const [collapseQuestionnaire, setCollapseQuestionnaire] = useState(true);
   const [collapseSurvey, setCollapseSurvey] = useState(true);
   const [collapseTasks, setCollapseTasks] = useState(true);
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [selectedNetwork, setSelectedNetwork] = useState("base");
+  const [claimTokenModal, setClaimTokenModal] = useState(false);
+
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  const handleNetworkSelect = (network: any) => {
+    setSelectedNetwork(network);
+    setIsDropdownOpen(false);
+    setClaimTokenModal(true);
+    // Add any additional logic needed for withdrawal
+  };
 
   React.useEffect(() => {
     if (user?.id && !user?.phone) {
@@ -273,25 +291,56 @@ const Dashboard = () => {
                   {" "}
                   {pointBalance >= 10000
                     ? "Claim points in wallet"
-                    : "10,000 pts to withdraw"}{" "}
+                    : "10,000 pts to withdraw"}
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-row items-center justify-between w-full gap-3">
-              <Link
-                href={"/wallet"}
-                className="w-full flex flex-row gap-3 items-center justify-center bg-white py-3 rounded-xl text-center mt-6 text-[#080808] font-semibold"
-              >
-                Wallet
-                <WalletMoney />
-              </Link>
+            <div className="grid grid-cols-2 items-center justify-between w-full gap-3 text-sm">
+              <div className="relative w-full">
+                <div
+                  onClick={toggleDropdown}
+                  className="w-full flex flex-row gap-2 items-center justify-center bg-white py-3 rounded-xl text-center mt-6 text-[#080808] font-semibold"
+                >
+                  Wallet
+                  <ArrowDown stroke="#7C56FE" size={20} />
+                </div>
+                {isDropdownOpen && (
+                  <div className="absolute w-full bg-white border rounded-lg mt-2 py-1 shadow-lg z-10">
+                    <div
+                      onClick={() => handleNetworkSelect("base")}
+                      className="flex flex-row gap-2 items-center py-2 px-4 cursor-pointer text-[#1577EA]"
+                    >
+                      <Image
+                        alt="base"
+                        width={18}
+                        height={18}
+                        src={"/images/BASE.svg"}
+                      />
+                      BASE
+                    </div>
+                    <div className="border border-[#E5E7EB]" />
+                    <div
+                      onClick={() => handleNetworkSelect("optimism")}
+                      className="flex flex-row gap-2 items-center py-2 px-4 cursor-pointer text-[#E81509]"
+                    >
+                      <Image
+                        alt="op"
+                        width={18}
+                        height={18}
+                        src={"/images/optimism.svg"}
+                      />
+                      Optimism
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <Link
                 href={"/withdraw"}
-                className="w-full flex flex-row gap-3 items-center justify-center bg-white py-3 rounded-xl text-center mt-6 text-[#080808] font-semibold"
+                className="w-full flex flex-row gap-2 items-center justify-center bg-white py-3 rounded-xl text-center mt-6 text-[#080808] font-semibold"
               >
-                Withdraw Tokens
+                Withdraw
                 <ArrowRight stroke="#7C56FE" size={20} />
               </Link>
             </div>
@@ -429,6 +478,146 @@ const Dashboard = () => {
         disabled={remainingTime > 0}
         isOpen={showDailyRewardModal}
       />
+
+      {claimTokenModal && (
+        <div className="fixed inset-0 flex items-end justify-center z-50 bg-[#0808086B] bg-opacity-50">
+          <div className="bg-white backdrop h-auto rounded-t-lg shadow-lg p-4 mx-1 max-w-[460px] w-full transition-transform transform translate-y-0">
+            <div className="py-4 flex flex-col gap-4 bg-white bg-opacity-75 backdrop-blur-sm rounded-md w-full">
+              <div className="flex flex-row items-center justify-between">
+                <div />
+                <h2 className="text-lg font-bold">Claim token</h2>
+
+                <X size={20} onClick={() => setClaimTokenModal(false)} />
+              </div>
+
+              <div className="flex flex-col gap-4 mt-4">
+                <div className="flex flex-col text-sm font-semibold">
+                  <p>Select claim option</p>
+                  <p className="text-[#7D7D7D] font-medium text-[13px]">
+                    Where do you want to receive on your token
+                  </p>
+                </div>
+
+                <div className="flex flex-col py-2 items-start gap-4 justify-between text-[15px] font-medium">
+                  <div
+                    onClick={() => setSelectedNetwork("base")}
+                    className="w-full flex flex-row items-center justify-between"
+                  >
+                    <div className="flex flex-row gap-2 items-center">
+                      <Image
+                        alt="base"
+                        width={18}
+                        height={18}
+                        src={"/images/BASE.svg"}
+                      />
+                      <p className="text-[#1577EA]">BASE</p>{" "}
+                      <p className="text-sm font-medium text-[#7D7D7D]">
+                        wallet
+                      </p>
+                    </div>
+
+                    <div className="w-5 h-5 border-2 border-[#98A2B3] rounded-full flex items-center justify-center">
+                      <div
+                        className={`w-3 h-3 rounded-full  ${
+                          selectedNetwork === "base"
+                            ? "bg-[#6200EE] border-[#6200EE] border-2"
+                            : ""
+                        }`}
+                      ></div>
+                    </div>
+                  </div>
+                  <div
+                    onClick={() => setSelectedNetwork("optimism")}
+                    className="w-full flex flex-row items-center justify-between"
+                  >
+                    <div className="flex flex-row gap-2 items-center">
+                      <Image
+                        alt="op"
+                        width={18}
+                        height={18}
+                        src={"/images/optimism.svg"}
+                      />
+                      <p className="text-[#E81509]">Optimism</p>{" "}
+                      <p className="text-sm font-medium text-[#7D7D7D]">
+                        wallet
+                      </p>
+                    </div>
+
+                    <div className="w-5 h-5 border-2 border-[#98A2B3] rounded-full flex items-center justify-center">
+                      <div
+                        className={`w-3 h-3 rounded-full  ${
+                          selectedNetwork === "optimism"
+                            ? "bg-[#6200EE] border-[#6200EE] border-2"
+                            : ""
+                        }`}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4 mt-2">
+                <div className="flex flex-col">
+                  <p className="text-[#7D7D7D] font-medium text-[13px]">
+                    Virtual balance{" "}
+                  </p>
+
+                  <div className="flex flex-row items-center gap-2">
+                    <CoinSVG fill="black" />
+                    <p className="text-[22px] font-bold">160,450.00</p>
+                    <p className="text-sm font-medium">pts</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex flex-row items-center justify-between">
+                      <p className="text-[13px] font-semibold">Input amount</p>
+                      <p className="text-[12px] text-[#7C56FE] font-medium">
+                        max
+                      </p>
+                    </div>
+
+                    <input
+                      name="amount"
+                      value={"125000"}
+                      onChange={() => {}}
+                      className="py-2 px-2 border border-[#E5E7EB] rounded-[8px] text-base font-medium text-black placeholder:text-[#98A2B3]"
+                    />
+                  </div>
+
+                  <ArrowDownUp stroke="#7C56FE" className="self-center flex" />
+
+                  <div className="flex flex-col gap-1">
+                    <div className="flex flex-row items-center justify-between">
+                      <p className="text-[13px] font-semibold">You receive</p>
+                    </div>
+
+                    <input
+                      name="amount"
+                      value={""}
+                      onChange={() => {}}
+                      className="py-2 px-2 border border-[#E5E7EB] rounded-[8px] text-base font-medium text-black placeholder:text-[#98A2B3]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* {selectedNetwork === "base" && (
+                <div className="flex flex-col gap-2 mt-8">base option</div>
+              )}
+
+              {selectedNetwork === "optimism" && (
+                <div className="flex flex-col gap-2 mt-8">op option</div>
+              )} */}
+
+              <Button className="my-6 w-full flex flex-row gap-2 items-center justify-center rounded-[8px] py-3 font-bold text-sm">
+                Swap
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </AuthNavLayout>
   );
 };

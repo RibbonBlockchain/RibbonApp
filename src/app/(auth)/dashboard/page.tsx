@@ -11,7 +11,7 @@ import { useGetAuth } from "@/api/auth";
 import PageLoader from "@/components/loader";
 import { useSession } from "next-auth/react";
 import Todo from "@/containers/dashboard/todo";
-import { ArrowRight, EyeOff, ArrowDown, ArrowDownUp, X } from "lucide-react";
+import { X, EyeOff, ArrowRight, ArrowDownUp, ChevronDown } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import Topbar from "@/containers/dashboard/top-bar";
 import {
@@ -36,9 +36,7 @@ import { useRouter } from "next/navigation";
 import TaskTodo from "@/containers/dashboard/task-todo";
 import TaskModal, { TTasks } from "@/components/modal/task-modal";
 import TaskDetailsModal from "@/components/modal/task-modal";
-import { ArrowDownIcon, LockClosedIcon } from "@heroicons/react/24/solid";
 import Button from "@/components/button";
-import InputBox from "@/components/questionnarie/input-box";
 
 const Dashboard = () => {
   const session = useSession();
@@ -139,7 +137,7 @@ const Dashboard = () => {
           {isNewUser && user && <UserWalkthrough />}
 
           <Topbar />
-          <div className="bg-gradient-to-br from-[#442F8C] to-[#951E93] text-white rounded-2xl w-full h-auto p-4 my-2 flex flex-col">
+          <div className="bg-gradient-to-br from-[#442F8C] to-[#951E93] text-white rounded-2xl w-full h-auto px-3 sm:px-4 py-4 my-2 flex flex-col">
             <div className="flex flex-row items-center justify-between">
               <div className="flex flex-col items-start gap-1 text-center">
                 <div
@@ -164,7 +162,7 @@ const Dashboard = () => {
                     </div>
                     <div
                       onClick={handleSwapBalance}
-                      className="flex flex-row gap-2 items-center justify-center text-lg font-bold cursor-pointer"
+                      className="flex flex-row gap-1 items-center justify-center text-lg font-bold cursor-pointer"
                     >
                       <CoinSVG />
                       {hideBalance ? (
@@ -172,9 +170,15 @@ const Dashboard = () => {
                       ) : (
                         <>
                           {swapBalance ? (
-                            <p> {pointBalance.toLocaleString()} Points</p>
+                            <div className="flex flex-row gap-[2px]">
+                              <p> {pointBalance.toLocaleString()}</p>
+                              <p className="text-[10px]">Pts</p>
+                            </div>
                           ) : (
-                            <p> {balance.toFixed(4)} WLD</p>
+                            <div className="flex flex-row gap-[2px] items-center">
+                              <p> {balance.toFixed(2)}</p>
+                              <p className="text-xs">WLD</p>
+                            </div>
                           )}
                         </>
                       )}
@@ -194,7 +198,7 @@ const Dashboard = () => {
                             {swapBalance ? (
                               <p> {balance.toFixed(4)} WLD</p>
                             ) : (
-                              <p> {pointBalance.toLocaleString()} Points</p>
+                              <p> {pointBalance.toLocaleString()} Pts</p>
                             )}
                           </>
                         )}
@@ -225,7 +229,7 @@ const Dashboard = () => {
                       ) : (
                         <>
                           {swapBalance ? (
-                            <p> {Number(wldTokenBalance) * 5000} Points </p>
+                            <p> {Number(wldTokenBalance) * 5000} Pts </p>
                           ) : (
                             <p> {wldTokenBalance} WLD</p>
                           )}
@@ -247,7 +251,7 @@ const Dashboard = () => {
                             {swapBalance ? (
                               <p> {wldTokenBalance} WLD</p>
                             ) : (
-                              <p>{Number(wldTokenBalance) * 5000} Points</p>
+                              <p>{Number(wldTokenBalance) * 5000} Pts</p>
                             )}
                           </>
                         )}
@@ -287,7 +291,7 @@ const Dashboard = () => {
                     )}
                   </CircularProgressbarWithChildren>
                 </div>
-                <p className="text-xs font-medium text-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 ">
+                <p className="text-[11px] font-medium text-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 ">
                   {" "}
                   {pointBalance >= 10000
                     ? "Claim points in wallet"
@@ -303,7 +307,7 @@ const Dashboard = () => {
                   className="w-full flex flex-row gap-2 items-center justify-center bg-white py-3 rounded-xl text-center mt-6 text-[#080808] font-semibold"
                 >
                   Wallet
-                  <ArrowDown stroke="#7C56FE" size={20} />
+                  <ChevronDown stroke="#7C56FE" size={20} />
                 </div>
                 {isDropdownOpen && (
                   <div className="absolute w-full bg-white border rounded-lg mt-2 py-1 shadow-lg z-10">
@@ -351,7 +355,7 @@ const Dashboard = () => {
             className="mx-auto border-[#4B199C] border-1 mb-5 mt-2"
           >
             <span
-              className={`w-full gap-2 max-w-[350px] mx-auto flex flex-row items-center justify-between text-[14px] font-semibold py-1.5 px-2 sm:px-3 text-gradient bg-white border-[#4B199C] border-[2px] rounded-full `}
+              className={`w-full gap-1 xxs:gap-2 max-w-[350px] mx-auto flex flex-row items-center justify-between text-[13px] xxs:text-sm font-semibold py-1.5 px-2 sm:px-3 text-gradient bg-white border-[#4B199C] border-[2px] rounded-full `}
             >
               Claim daily reward
               <Image
@@ -371,7 +375,8 @@ const Dashboard = () => {
                   )}
                 >
                   <CoinSVG fill="#4B199C" />
-                  0.02 WLD
+                  <p>0.02</p>
+                  <p className="text-sm">WLD</p>
                 </div>
               )}
             </span>

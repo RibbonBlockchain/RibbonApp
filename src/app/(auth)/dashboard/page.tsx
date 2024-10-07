@@ -71,6 +71,13 @@ const Dashboard = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedNetwork, setSelectedNetwork] = useState("base");
   const [claimTokenModal, setClaimTokenModal] = useState(false);
+  const handleClaimButton = () => {
+    if (selectedNetwork === "base") {
+      router.push("/wallet/base");
+    } else {
+      router.push("/wallet/optimism");
+    }
+  };
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -585,7 +592,7 @@ const Dashboard = () => {
 
                     <input
                       name="amount"
-                      value={"125000"}
+                      value={""}
                       onChange={() => {}}
                       className="py-2 px-2 border border-[#E5E7EB] rounded-[8px] text-base font-medium text-black placeholder:text-[#98A2B3]"
                     />
@@ -616,8 +623,11 @@ const Dashboard = () => {
                 <div className="flex flex-col gap-2 mt-8">op option</div>
               )} */}
 
-              <Button className="my-6 w-full flex flex-row gap-2 items-center justify-center rounded-[8px] py-3 font-bold text-sm">
-                Swap
+              <Button
+                onClick={handleClaimButton}
+                className="my-6 w-full flex flex-row gap-2 items-center justify-center rounded-[8px] py-3 font-bold text-sm"
+              >
+                Claim
               </Button>
             </div>
           </div>

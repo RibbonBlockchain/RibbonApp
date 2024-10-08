@@ -282,10 +282,7 @@ const Dashboard = () => {
                     strokeWidth={8}
                   >
                     {pointBalance >= 10000 ? (
-                      <button
-                        onClick={() => router.push("/wallet")}
-                        className="cursor-pointer text-sm px-2 py-1 bg-white text-black rounded-full "
-                      >
+                      <button className="cursor-pointer text-sm px-2 py-1 bg-white text-black rounded-full ">
                         {"Claim"}
                       </button>
                     ) : (
@@ -319,8 +316,9 @@ const Dashboard = () => {
                 {isDropdownOpen && (
                   <div className="absolute w-full bg-white border rounded-lg mt-2 py-1 shadow-lg z-10">
                     <div
-                      onClick={() => handleNetworkSelect("base")}
-                      className="flex flex-row gap-2 items-center py-2 px-4 cursor-pointer text-[#1577EA]"
+                      // onClick={() => handleNetworkSelect("base")}
+                      onClick={() => router.push("/wallet/base")}
+                      className="w-full flex flex-row gap-2 items-center py-2 px-4 cursor-pointer text-[#1577EA]"
                     >
                       <Image
                         alt="base"
@@ -332,8 +330,9 @@ const Dashboard = () => {
                     </div>
                     <div className="border border-[#E5E7EB]" />
                     <div
-                      onClick={() => handleNetworkSelect("optimism")}
-                      className="flex flex-row gap-2 items-center py-2 px-4 cursor-pointer text-[#E81509]"
+                      // onClick={() => handleNetworkSelect("optimism")}
+                      onClick={() => router.push("/wallet/optimism")}
+                      className="w-full flex flex-row gap-2 items-center py-2 px-4 cursor-pointer text-[#E81509]"
                     >
                       <Image
                         alt="op"

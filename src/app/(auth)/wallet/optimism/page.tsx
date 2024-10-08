@@ -214,6 +214,7 @@ const OptimismWallet = () => {
     await web3auth.logout();
     setProvider(null);
     setLoggedIn(false);
+    router.push("/dashboard");
   };
 
   // get user accounts
@@ -617,14 +618,14 @@ const OptimismWallet = () => {
       {loggedIn ? (
         <>
           <div className="p-4 sm:p-6 min-h-screen bg-white flex flex-col">
-            <div className="mb-6">
+            <div className="mb-2 mt-4">
               <ArrowLeft
                 stroke="#939393"
                 onClick={() => router.push("/dashboard")}
                 className="flex w-[40px] cursor-pointer"
               />
 
-              <div className="flex -mt-10 text-black  flex-row items-center justify-center text-base font-semibold">
+              <div className="flex -mt-6 text-black  flex-row items-center justify-center text-base font-semibold">
                 {userInfo?.name?.split(" ")[1]}&apos;s Wallet
               </div>
             </div>
@@ -784,8 +785,9 @@ const OptimismWallet = () => {
               </div>
 
               <CustomTokenUI
-                wldTokenBalance={wldToken}
+                tokenBalance={wldToken}
                 balanceUSD={(Number(wldToken) * currentPrice).toFixed(5)}
+                token={"WLD"}
               />
 
               <button
@@ -932,7 +934,10 @@ const OptimismWallet = () => {
       ) : (
         <div className="flex flex-col p-4 sm:p-6 h-screen bg-cover bg-walletBg">
           <div className="mb-6">
-            <BackArrowButton stroke="#FFF" />
+            <BackArrowButton
+              stroke="#FFF"
+              onClick={() => router.push("/dashboard")}
+            />
             <div className="flex -mt-10 text-white  flex-row items-center justify-center text-base font-semibold">
               Wallet
             </div>

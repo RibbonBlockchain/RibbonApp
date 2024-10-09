@@ -9,13 +9,11 @@ import BackArrowButton from "@/components/button/back-arrow";
 import AddressDisplay from "@/components/wallet/address-display";
 
 const BaseWalletReceive = () => {
-  // const { data: loanWallet } = useGetUserWallet();
-  // const loanWalletAddress = loanWallet?.data[1]?.address;
-  const loanWalletAddress = "dsfslidfnsdfksdf";
+  const baseAddress = localStorage.getItem("baseWallet");
 
   const handleClick = () => {
     navigator.clipboard
-      .writeText(loanWalletAddress as string)
+      .writeText(baseAddress as string)
       .then(() => {
         toast.success("address copied to clipboard!");
       })
@@ -42,8 +40,8 @@ const BaseWalletReceive = () => {
       </div>
 
       <div className="flex flex-row gap-2 items-center justify-center">
-        <Image src="/assets/usdc.png" alt="" width={24} height={24} />
-        USDC
+        <Image src="/images/BASE.svg" alt="" width={24} height={24} />
+        Base USDC
       </div>
 
       <div
@@ -52,7 +50,7 @@ const BaseWalletReceive = () => {
         style={{ cursor: "pointer" }}
       >
         <QRCode
-          value={loanWalletAddress as string}
+          value={baseAddress as string}
           size={192}
           bgColor={"#ffffff"}
           fgColor={"#000000"}
@@ -60,7 +58,7 @@ const BaseWalletReceive = () => {
           className="p-3 rounded-2xl"
         />
         <div className="px-2 py-2 mt-2 text-wrap text-sm flex-wrap text-center text-[#2C2C2C]">
-          <AddressDisplay address={loanWalletAddress} />
+          <AddressDisplay address={baseAddress} />
         </div>
       </div>
 

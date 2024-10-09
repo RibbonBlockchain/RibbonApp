@@ -7,6 +7,7 @@ import {
   TWithdrawPointsBody,
   TSubmitSurveyBody,
   TRateSurveyBody,
+  TBaseClaimBody,
 } from "./types";
 import {
   getTasks,
@@ -34,6 +35,7 @@ import {
   submitSurvey,
   rateSurvey,
   getCompletedSurveys,
+  baseClaim,
 } from "./req";
 import { onError } from "../api-client";
 import { TGetResponse } from "../auth/types";
@@ -278,6 +280,13 @@ export const useClaimPoints = () => {
   return useMutation({
     onError,
     mutationFn: (body: TClaimSwapPointsBody) => claimPoints(body),
+  });
+};
+
+export const useBaseClaim = () => {
+  return useMutation({
+    onError,
+    mutationFn: (body: TBaseClaimBody) => baseClaim(body),
   });
 };
 

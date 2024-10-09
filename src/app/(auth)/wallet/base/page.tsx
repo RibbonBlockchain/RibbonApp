@@ -19,7 +19,10 @@ import CustomTokenUI from "@/components/wallet/native-token-ui";
 import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { useCapabilities, useWriteContracts } from "wagmi/experimental";
 import { useAccount, useConnect, useDisconnect, useReadContract } from "wagmi";
-import { convertPoints6Decimal } from "@/lib/utils/convertPoint";
+import { convertPoints, convertPoints6Decimal } from "@/lib/utils/convertPoint";
+import { useUsdcCoinDetails } from "@/lib/values/usdcPriceApi";
+import { useBaseClaim } from "@/api/user";
+import { onSuccess } from "@/api/api-client";
 
 const tabs = [
   { label: "Deposits", value: "deposits" },
@@ -56,6 +59,44 @@ const BaseWallet = () => {
   });
 
   const usdcBalance = data ? parseFloat(data.toString()) / Math.pow(10, 6) : 0;
+
+  const { data: usdcPrice } = useUsdcCoinDetails();
+  const currentPrice = usdcPrice?.market_data.current_price.usd as number;
+
+  const { mutate } = useBaseClaim();
+  const [amount, setAmount] = useState(10000);
+
+  const handleBaseClaim = () => {
+    mutate(
+      {
+        address: account.address as string,
+        amount: amount,
+      },
+      {
+        onSuccess: (data) => {
+          writeContracts({
+            contracts: [
+              {
+                address: "0x95Cff63E43A13c9DC97aC85D2f02327aD01dB560",
+                abi: baseAbi,
+                functionName: "permitSwapToPaymentCoin",
+                args: [
+                  account?.address,
+                  Number(convertPoints(amount)),
+                  data?.data?.deadline,
+                  data?.data?.v,
+                  data?.data?.r,
+                  data?.data?.s,
+                ],
+              },
+            ],
+            capabilities,
+          });
+          console.log(Number(convertPoints(amount)), "here");
+        },
+      }
+    );
+  };
 
   useEffect(() => {
     if (account?.address) {
@@ -185,32 +226,13 @@ const BaseWallet = () => {
             </div>
             <CustomTokenUI
               tokenBalance={usdcBalance.toFixed(2)}
-              balanceUSD={0.0}
+              balanceUSD={usdcBalance * currentPrice}
               token="usdc"
             />
+
             <div>
               <button
-                onClick={() => {
-                  writeContracts({
-                    contracts: [
-                      {
-                        address: "0x95Cff63E43A13c9DC97aC85D2f02327aD01dB560",
-                        abi: baseAbi,
-                        functionName: "permitSwapToPaymentCoin",
-                        // args: [spender,value,deadline,v,r,s],
-                        args: [
-                          account?.address,
-                          10000000000000000000000,
-                          1728318268,
-                          27,
-                          "0x602f932ac1889e95bad8d8c6c3f3c032ad9ad4c00bf2f889016544536966d99d",
-                          "0x12ca89c4cdf3fd4ec342f58cd56a436a77cdc5843c2fcae903553a893840175c",
-                        ],
-                      },
-                    ],
-                    capabilities,
-                  });
-                }}
+                onClick={handleBaseClaim}
                 className={clsx(
                   "mt-5 w-full text-center py-3 font-semibold border border-[#D6CBFF] rounded-[16px]"
                 )}
@@ -268,6 +290,7 @@ const BaseWallet = () => {
                 </p>
               ))}
             </div>
+
             <div className="mt-4">
               {selectedTxTab === "deposits" && <div>List of deposits here</div>}
               {selectedTxTab === "withdrawals" && (

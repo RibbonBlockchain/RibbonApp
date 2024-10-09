@@ -49,3 +49,8 @@ export type TClaimSwapPointsBody = {
 export type TWithdrawPointsBody = {
   amount: number;
 };
+
+export type TBaseClaimBody = {
+  amount: number;
+  address: string;
+};

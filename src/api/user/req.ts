@@ -7,6 +7,7 @@ import {
   TRateQuestionnaireBody,
   TSubmitSurveyBody,
   TRateSurveyBody,
+  TBaseClaimBody,
 } from "./types";
 import { TResponse, client } from "../api-client";
 
@@ -144,6 +145,11 @@ export const readNotification = async (body: TReadNotificationBody) => {
 
 export const claimPoints = async (body: TClaimSwapPointsBody) => {
   const res = await client.post("/user/claim-point", body);
+  return res.data;
+};
+
+export const baseClaim = async (body: TBaseClaimBody) => {
+  const res = await client.post("/user/base-claim", body);
   return res.data;
 };
 

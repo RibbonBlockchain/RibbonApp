@@ -9,12 +9,13 @@ import { BaseProvider } from "@/app/(auth)/wallet/base/baseProvider";
 const RootProvider = ({ children }: React.PropsWithChildren) => {
   return (
     // <ThemeProvider enableSystem={true} attribute="class">
-    <ReactQueryProvider>
-      <BaseProvider>
+    <BaseProvider>
+      <ReactQueryProvider>
         <SessionProvider>{children}</SessionProvider>
         <Toaster />
-      </BaseProvider>
-    </ReactQueryProvider>
+      </ReactQueryProvider>
+    </BaseProvider>
+
     // </ThemeProvider>
   );
 };

@@ -46,7 +46,6 @@ import TaskDetailsModal from "@/components/modal/task-modal";
 import Button from "@/components/button";
 import { shorten } from "@/lib/utils/shorten";
 import { copyToClipboard } from "@/lib/utils";
-import { base } from "viem/chains";
 import toast from "react-hot-toast";
 import { useUsdcCoinDetails } from "@/lib/values/usdcPriceApi";
 
@@ -80,6 +79,8 @@ const Dashboard = () => {
   const optimismAddress = localStorage.getItem("address");
   const baseAddress = localStorage.getItem("baseWallet");
   const baseBalance = localStorage.getItem("baseBalance");
+
+  const convertedBaseBalance = Number(baseBalance) * currentPrice;
 
   const [collapseQuestionnaire, setCollapseQuestionnaire] = useState(true);
   const [collapseSurvey, setCollapseSurvey] = useState(true);
@@ -374,7 +375,7 @@ const Dashboard = () => {
                         ) : (
                           <>
                             {swapBalance ? (
-                              <p>$ {Number(baseBalance) * currentPrice} </p>
+                              <p>$ {convertedBaseBalance.toFixed(2)} </p>
                             ) : (
                               <p> {baseBalance} usdc</p>
                             )}
@@ -396,7 +397,7 @@ const Dashboard = () => {
                               {swapBalance ? (
                                 <p> {baseBalance} usdc</p>
                               ) : (
-                                <p>$ {Number(baseBalance) * currentPrice}</p>
+                                <p>$ {convertedBaseBalance.toFixed(2)}</p>
                               )}
                             </>
                           )}

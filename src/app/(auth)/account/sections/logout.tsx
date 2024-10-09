@@ -12,6 +12,7 @@ const Logout = () => {
 
   const handleLogout = () => {
     if (isLoading) return;
+    localStorage.clear();
     logout();
   };
 

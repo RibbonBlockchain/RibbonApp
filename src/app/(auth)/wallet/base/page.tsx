@@ -1,28 +1,27 @@
 "use client";
 
 import {
+  X,
   Copy,
   LogOut,
   ArrowUp,
   ArrowDown,
   ArrowLeft,
   ArrowDownUp,
-  X,
 } from "lucide-react";
 import clsx from "clsx";
 import Button from "@/components/button";
+import { useBaseClaim } from "@/api/user";
 import { useRouter } from "next/navigation";
 import { copyToClipboard } from "@/lib/utils";
 import { shorten } from "@/lib/utils/shorten";
 import { useEffect, useState, useMemo } from "react";
+import { useUsdcCoinDetails } from "@/lib/values/usdcPriceApi";
 import CustomTokenUI from "@/components/wallet/native-token-ui";
 import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { useCapabilities, useWriteContracts } from "wagmi/experimental";
 import { useAccount, useConnect, useDisconnect, useReadContract } from "wagmi";
 import { convertPoints, convertPoints6Decimal } from "@/lib/utils/convertPoint";
-import { useUsdcCoinDetails } from "@/lib/values/usdcPriceApi";
-import { useBaseClaim } from "@/api/user";
-import { onSuccess } from "@/api/api-client";
 
 const tabs = [
   { label: "Deposits", value: "deposits" },
@@ -50,7 +49,7 @@ const BaseWallet = () => {
     account: account.address,
   });
 
-  const { data, isError, isLoading } = useReadContract({
+  const { data, isError, isLoading, refetch } = useReadContract({
     abi: usdcAbi,
     address: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
     functionName: "balanceOf",
@@ -92,7 +91,7 @@ const BaseWallet = () => {
             ],
             capabilities,
           });
-          console.log(Number(convertPoints(amount)), "here");
+          refetch();
         },
       }
     );
@@ -106,6 +105,7 @@ const BaseWallet = () => {
 
   useEffect(() => {
     if (data) {
+      refetch();
       localStorage.setItem("baseBalance", String(usdcBalance));
     }
   }, [data, usdcBalance]);
@@ -136,8 +136,9 @@ const BaseWallet = () => {
   useEffect(() => {
     if (receipt) {
       // refetchNftData();
+      refetch();
     }
-  }, [receipt]);
+  }, [receipt, refetch]);
 
   const handleTransfer = () => {
     if (!recipientAddress || !sendAmount || sendAmount <= 0) {
@@ -158,6 +159,7 @@ const BaseWallet = () => {
       ],
       capabilities,
     });
+
     setLoading(false);
     setOpenTx(false);
   };
@@ -217,17 +219,18 @@ const BaseWallet = () => {
                 />
               </div>
 
-              <a
-                href="http://base.org/"
+              <div
+                onClick={() => window.open('"http://base.org/names"', "_blank")}
                 className="max-w-fit mt-2 py-1 px-4 border border-[#7C56FE] text-xs text-[#7C56FE] font-medium rounded-full cursor-pointer"
               >
                 Personalize wallet
-              </a>
+              </div>
             </div>
+
             <CustomTokenUI
               tokenBalance={usdcBalance.toFixed(2)}
               balanceUSD={usdcBalance * currentPrice}
-              token="usdc"
+              token="USDC"
             />
 
             <div>
@@ -300,7 +303,11 @@ const BaseWallet = () => {
             </div>
             <div className="flex my-20 items-center justify-center">
               <button
-                onClick={() => disconnect()}
+                onClick={() => {
+                  disconnect();
+                  localStorage.removeItem("baseWallet");
+                  localStorage.removeItem("baseBalance");
+                }}
                 className="flex flex-row items-center justify-center gap-2 px-4 py-2 w-fit font-semibold text-red-500 rounded hover:bg-red-300 mr-2 mt-4"
               >
                 Disconnect <LogOut />

@@ -29,6 +29,7 @@ import {
   ArrowDown,
   ArrowLeft,
   ArrowUp,
+  Copy,
   LucideCopy,
 } from "lucide-react";
 import { ArrowDownUp } from "lucide-react";
@@ -625,8 +626,14 @@ const OptimismWallet = () => {
                 className="flex w-[40px] cursor-pointer"
               />
 
-              <div className="flex -mt-6 text-black  flex-row items-center justify-center text-base font-semibold">
-                {userInfo?.name?.split(" ")[1]}&apos;s Wallet
+              <div className="flex -mt-6 text-black flex-row gap-2 items-center justify-center text-base font-semibold">
+                <Image
+                  alt="op"
+                  width={24}
+                  height={24}
+                  src={"/images/optimism.svg"}
+                />
+                Optimism Wallet
               </div>
             </div>
             {/* show pending tx */}
@@ -770,7 +777,7 @@ const OptimismWallet = () => {
 
             <div className="flex flex-col gap-2 mb-10 overflow-hidden">
               <div className="mt-4">
-                <p className="text-center mb-1">Your smart account is below</p>
+                {/* <p className="text-center mb-1">Your smart account is below</p> */}
                 <div className="flex flex-row gap-5 items-center justify-center ">
                   <p className="text-[16px]">{shorten(SAAddress)}</p>
                   <p
@@ -779,7 +786,7 @@ const OptimismWallet = () => {
                       copyToClipboard(SAAddress), toast.success(`copied`);
                     }}
                   >
-                    <LucideCopy fill="#939393" stroke="#939393" size={16} />
+                    <Copy stroke="#939393" size={16} />
                   </p>
                 </div>
               </div>

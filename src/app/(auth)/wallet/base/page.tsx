@@ -22,17 +22,19 @@ import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { useCapabilities, useWriteContracts } from "wagmi/experimental";
 import { useAccount, useConnect, useDisconnect, useReadContract } from "wagmi";
 import { convertPoints, convertPoints6Decimal } from "@/lib/utils/convertPoint";
+import Image from "next/image";
 
 const tabs = [
-  { label: "Deposits", value: "deposits" },
-  { label: "Withdrawals", value: "withdrawals" },
-  { label: "Swap", value: "swap" },
+  { label: "Tokens", value: "tokens" },
+  { label: "Activities", value: "activities" },
 ];
 
 const BaseWallet = () => {
   const router = useRouter();
   const baseAbi = require("./base-abi.json");
-  const usdcAbi = require("./usdc-abi.json");
+  const USDCAbi = require("./usdc-abi.json");
+
+  const [iframeSrc, setIframeSrc] = useState<string>("http://base.org/names");
 
   const account = useAccount();
   const { connectors, connect } = useConnect();
@@ -50,17 +52,17 @@ const BaseWallet = () => {
   });
 
   const { data, isError, isLoading, refetch } = useReadContract({
-    abi: usdcAbi,
+    abi: USDCAbi,
     address: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
     functionName: "balanceOf",
     // @ts-ignore
     args: [account?.address],
   });
 
-  const usdcBalance = data ? parseFloat(data.toString()) / Math.pow(10, 6) : 0;
+  const USDCBalance = data ? parseFloat(data.toString()) / Math.pow(10, 6) : 0;
 
-  const { data: usdcPrice } = useUsdcCoinDetails();
-  const currentPrice = usdcPrice?.market_data.current_price.usd as number;
+  const { data: USDCPrice } = useUsdcCoinDetails();
+  const currentPrice = USDCPrice?.market_data.current_price.usd as number;
 
   const { mutate } = useBaseClaim();
   const [amount, setAmount] = useState(10000);
@@ -106,9 +108,9 @@ const BaseWallet = () => {
   useEffect(() => {
     if (data) {
       refetch();
-      localStorage.setItem("baseBalance", String(usdcBalance));
+      localStorage.setItem("baseBalance", String(USDCBalance));
     }
-  }, [data, usdcBalance]);
+  }, [data, USDCBalance]);
 
   const capabilities = useMemo(() => {
     if (!availableCapabilities || !account.chainId) return {};
@@ -131,7 +133,7 @@ const BaseWallet = () => {
   const [sendAmount, setSendAmount] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(false);
 
-  const [selectedTxTab, setSelectedTxTab] = useState("deposits");
+  const [selectedTxTab, setSelectedTxTab] = useState("tokens");
 
   useEffect(() => {
     if (receipt) {
@@ -152,7 +154,7 @@ const BaseWallet = () => {
       contracts: [
         {
           address: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-          abi: usdcAbi,
+          abi: USDCAbi,
           functionName: "transfer",
           args: [recipientAddress, convertPoints6Decimal(sendAmount)],
         },
@@ -203,11 +205,12 @@ const BaseWallet = () => {
               onClick={() => router.back()}
               className="flex cursor-pointer"
             />
-            <div className="flex -mt-6 flex-row items-center justify-center text-base font-semibold">
-              Wallet
+            <div className="flex -mt-6 flex-row gap-2 items-center justify-center text-base font-semibold">
+              <Image src="/images/BASE.svg" alt="" width={24} height={24} />
+              Base Wallet
             </div>
           </div>
-          <div className="flex flex-col gap-2 mb-10 overflow-hidden">
+          <div className="w-full flex flex-col gap-2 mb-10 overflow-hidden">
             <div className="flex flex-col items-center justify-center mt-4">
               <div className="flex flex-row gap-5 items-center justify-center ">
                 <p className="text-[16px]">{shorten(account?.address)}</p>
@@ -220,7 +223,7 @@ const BaseWallet = () => {
               </div>
 
               <div
-                onClick={() => window.open('"http://base.org/names"', "_blank")}
+                // onClick={() => window.open('"http://base.org/names"', "_blank")}
                 className="max-w-fit mt-2 py-1 px-4 border border-[#7C56FE] text-xs text-[#7C56FE] font-medium rounded-full cursor-pointer"
               >
                 Personalize wallet
@@ -228,8 +231,8 @@ const BaseWallet = () => {
             </div>
 
             <CustomTokenUI
-              tokenBalance={usdcBalance.toFixed(2)}
-              balanceUSD={usdcBalance * currentPrice}
+              tokenBalance={USDCBalance.toFixed(2)}
+              balanceUSD={USDCBalance * currentPrice}
               token="USDC"
             />
 
@@ -295,13 +298,13 @@ const BaseWallet = () => {
             </div>
 
             <div className="mt-4">
-              {selectedTxTab === "deposits" && <div>List of deposits here</div>}
-              {selectedTxTab === "withdrawals" && (
-                <div>List of withdrawals here</div>
+              {selectedTxTab === "tokens" && <div>List of Tokens</div>}
+              {selectedTxTab === "activities" && (
+                <div>List of activities here</div>
               )}
-              {selectedTxTab === "swap" && <div>List of swaps here</div>}
             </div>
-            <div className="flex my-20 items-center justify-center">
+
+            <div className="flex mb-10 items-center justify-center">
               <button
                 onClick={() => {
                   disconnect();

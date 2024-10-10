@@ -2,15 +2,19 @@ import React from "react";
 
 const InputBox = ({
   name,
+  type,
   label,
   value,
   required,
   onChange,
+  placeholder,
 }: {
   name: any;
+  type?: any;
   value: any;
   label: string;
   required: boolean;
+  placeholder?: string;
   onChange: (e: any) => void;
 }) => {
   return (
@@ -25,11 +29,11 @@ const InputBox = ({
       </label>
       <input
         id="input"
-        type="text"
+        type={type || "text"}
         name={name}
         value={value}
         onChange={onChange}
-        placeholder="Ribbon Protocol"
+        placeholder={placeholder || "Ribbon Protocol"}
         className="text-xs w-full py-3.5 px-2 leading-tight shadow appearance-none border rounded  focus:outline-none focus:shadow-outline"
       />
     </div>

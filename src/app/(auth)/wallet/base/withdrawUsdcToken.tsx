@@ -14,7 +14,7 @@ type Props = {
   amount: string;
   handleAmountInput: (e: any) => void;
   isPending: any;
-  usdcTokenBalance: any;
+  USDCTokenBalance: any;
   USDvalue: any;
 };
 
@@ -62,7 +62,7 @@ const WithdrawUSDCToken: React.FC<Props> = (props) => {
                           <Image
                             width={35}
                             height={35}
-                            src={"/assets/usdc.png"}
+                            src={"/assets/USDC.png"}
                             alt="coin logo"
                             className="rounded-full"
                           />
@@ -70,7 +70,7 @@ const WithdrawUSDCToken: React.FC<Props> = (props) => {
                         <div>
                           <p className="text-base font-semibold">USDC</p>
                           <p className="text-xs text-[#626262]">
-                            Balance: {props.usdcTokenBalance} USDC
+                            Balance: {props.USDCTokenBalance} USDC
                           </p>
                         </div>
                       </div>

@@ -377,7 +377,7 @@ const Dashboard = () => {
                             {swapBalance ? (
                               <p>$ {convertedBaseBalance.toFixed(2)} </p>
                             ) : (
-                              <p> {baseBalance} usdc</p>
+                              <p> {baseBalance} USDC</p>
                             )}
                           </>
                         )}
@@ -395,7 +395,7 @@ const Dashboard = () => {
                           ) : (
                             <>
                               {swapBalance ? (
-                                <p> {baseBalance} usdc</p>
+                                <p> {baseBalance} USDC</p>
                               ) : (
                                 <p>$ {convertedBaseBalance.toFixed(2)}</p>
                               )}
@@ -422,7 +422,10 @@ const Dashboard = () => {
                     strokeWidth={8}
                   >
                     {pointBalance >= 10000 ? (
-                      <button className="cursor-pointer text-sm px-2 py-1 bg-white text-black rounded-full ">
+                      <button
+                        onClick={toggleDropdown}
+                        className="cursor-pointer text-sm px-2 py-1 bg-white text-black rounded-full "
+                      >
                         {"Claim"}
                       </button>
                     ) : (

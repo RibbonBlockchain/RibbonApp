@@ -1,38 +1,31 @@
 "use client";
 
+import { X, Copy, LogOut, ArrowUp, ArrowDown, ArrowLeft } from "lucide-react";
 import {
-  X,
-  Copy,
-  LogOut,
-  ArrowUp,
-  ArrowDown,
-  ArrowLeft,
-  ArrowDownUp,
-} from "lucide-react";
+  useBalance,
+  useWriteContract,
+  useSendTransaction,
+  useWaitForTransactionReceipt,
+} from "wagmi";
 import clsx from "clsx";
+import React from "react";
 import Image from "next/image";
+import { parseEther } from "viem";
+import TokenItem from "./token-item";
+import IframeComponent from "../iframe";
 import Button from "@/components/button";
 import { useBaseClaim } from "@/api/user";
 import { useRouter } from "next/navigation";
+import TransferModal from "./transfer-modal";
 import { copyToClipboard } from "@/lib/utils";
 import { shorten } from "@/lib/utils/shorten";
 import { useEffect, useState, useMemo } from "react";
+import InputBox from "@/components/questionnarie/input-box";
 import { useUsdcCoinDetails } from "@/lib/values/usdcPriceApi";
 import CustomTokenUI from "@/components/wallet/native-token-ui";
-import {
-  useBalance,
-  useSendTransaction,
-  useWaitForTransactionReceipt,
-  useWriteContract,
-} from "wagmi";
 import { useCapabilities, useWriteContracts } from "wagmi/experimental";
 import { useAccount, useConnect, useDisconnect, useReadContract } from "wagmi";
 import { convertPoints, convertPoints6Decimal } from "@/lib/utils/convertPoint";
-import { parseEther } from "viem";
-import TransferModal from "./transfer-modal";
-import React from "react";
-import TokenItem from "./token-item";
-import InputBox from "@/components/questionnarie/input-box";
 
 const tabs = [
   { label: "Tokens", value: "tokens" },
@@ -46,8 +39,6 @@ const BaseWallet = () => {
 
   const { data: USDCPrice } = useUsdcCoinDetails();
   const currentPrice = USDCPrice?.market_data.current_price.usd as number;
-
-  const [iframeSrc, setIframeSrc] = useState<string>("http://base.org/names");
 
   const account = useAccount();
   const { connectors, connect } = useConnect();
@@ -241,6 +232,7 @@ const BaseWallet = () => {
   const [openWldTx, setOpenWldTx] = useState(false);
   const [openLinkTx, setOpenLinkTx] = useState(false);
   const [claimUsdcModal, setClaimUsdcModal] = useState(false);
+  const [openIframeModal, setOpenIframeModal] = useState(false);
 
   const [recipientAddress, setRecipientAddress] = useState<string>("");
   const [sendAmount, setSendAmount] = useState<any>(null);
@@ -327,7 +319,7 @@ const BaseWallet = () => {
               </div>
 
               <div
-                // onClick={() => window.open('"http://base.org/names"', "_blank")}
+                onClick={() => setOpenIframeModal(true)}
                 className="max-w-fit mt-2 py-1 px-4 border border-[#7C56FE] text-xs text-[#7C56FE] font-medium rounded-full cursor-pointer"
               >
                 Personalize wallet
@@ -342,7 +334,6 @@ const BaseWallet = () => {
 
             <div>
               <button
-                // onClick={handleBaseClaim}
                 onClick={() => setClaimUsdcModal(true)}
                 className={clsx(
                   "mt-5 w-full text-center py-3 font-semibold border border-[#D6CBFF] rounded-[16px]"
@@ -544,6 +535,20 @@ const BaseWallet = () => {
                 {loading ? "Transferring..." : `Claim USDC`}
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {openIframeModal && (
+        <div className="fixed inset-0 flex items-center px-1 justify-center z-50 bg-[#0808086B] bg-opacity-50 flex-col">
+          <div
+            className="bg-white text-end rounded-full p-[2px]"
+            onClick={() => setOpenIframeModal(false)}
+          >
+            <X />
+          </div>
+          <div className="bg-white backdrop h-[95%] rounded-t-lg shadow-lg p-4 mx-1 max-w-[460px] w-full transition-transform transform translate-y-0">
+            <IframeComponent src="https://www.base.org/names" />
           </div>
         </div>
       )}

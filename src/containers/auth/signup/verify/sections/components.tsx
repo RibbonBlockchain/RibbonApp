@@ -8,9 +8,14 @@ import BackArrowButton from "@/components/button/back-arrow";
 export const SubHeading = () => {
   const { phoneNumber } = useAtomValue(authAtom);
   return (
-    <p className="text-sm text-slate-600">
-      A code has been sent to {phoneNumber}
-    </p>
+    <div className="flex flex-col gap-[2px]">
+      <p className="text-sm text-slate-600">
+        A code has been sent to {phoneNumber}
+      </p>
+      <p className="text-sm text-slate-600">
+        Use code: 000000 to create a test account.
+      </p>
+    </div>
   );
 };
 

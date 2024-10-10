@@ -1,6 +1,16 @@
 "use client";
 
-import { X, Copy, LogOut, ArrowUp, ArrowDown, ArrowLeft } from "lucide-react";
+import {
+  X,
+  Copy,
+  LogOut,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowUpLeft,
+  ArrowUpRight,
+  ArrowDownLeft,
+} from "lucide-react";
 import {
   useBalance,
   useWriteContract,
@@ -14,7 +24,7 @@ import { parseEther } from "viem";
 import TokenItem from "./token-item";
 import IframeComponent from "../iframe";
 import Button from "@/components/button";
-import { useBaseClaim } from "@/api/user";
+import { useBaseClaim, useUserTransactions } from "@/api/user";
 import { useRouter } from "next/navigation";
 import TransferModal from "./transfer-modal";
 import { copyToClipboard } from "@/lib/utils";
@@ -26,6 +36,8 @@ import CustomTokenUI from "@/components/wallet/native-token-ui";
 import { useCapabilities, useWriteContracts } from "wagmi/experimental";
 import { useAccount, useConnect, useDisconnect, useReadContract } from "wagmi";
 import { convertPoints, convertPoints6Decimal } from "@/lib/utils/convertPoint";
+import { SpinnerIcon } from "@/components/icons/spinner";
+import TransactionHistory from "../transaction-history";
 
 const tabs = [
   { label: "Tokens", value: "tokens" },
@@ -72,7 +84,7 @@ const BaseWallet = () => {
   }, [availableCapabilities, account.chainId]);
 
   // USDC
-  const { data: usdcData, refetch } = useReadContract({
+  const { data: usdcData, refetch: refetchUsdcBalance } = useReadContract({
     abi: USDCAbi,
     address: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
     functionName: "balanceOf",
@@ -83,6 +95,8 @@ const BaseWallet = () => {
   const usdcBalance = usdcData
     ? parseFloat(usdcData.toString()) / Math.pow(10, 6)
     : 0;
+
+  const convertedUsdcBalance = usdcBalance * currentPrice;
 
   const { mutate } = useBaseClaim();
   const [amount, setAmount] = useState<number | null>(null);
@@ -95,25 +109,32 @@ const BaseWallet = () => {
       },
       {
         onSuccess: (data) => {
-          writeContracts({
-            contracts: [
-              {
-                address: "0x95Cff63E43A13c9DC97aC85D2f02327aD01dB560",
-                abi: baseAbi,
-                functionName: "permitSwapToPaymentCoin",
-                args: [
-                  account?.address,
-                  Number(convertPoints(amount as number)),
-                  data?.data?.deadline,
-                  data?.data?.v,
-                  data?.data?.r,
-                  data?.data?.s,
-                ],
+          writeContracts(
+            {
+              contracts: [
+                {
+                  address: "0x95Cff63E43A13c9DC97aC85D2f02327aD01dB560",
+                  abi: baseAbi,
+                  functionName: "permitSwapToPaymentCoin",
+                  args: [
+                    account?.address,
+                    Number(convertPoints(amount as number)),
+                    data?.data?.deadline,
+                    data?.data?.v,
+                    data?.data?.r,
+                    data?.data?.s,
+                  ],
+                },
+              ],
+              capabilities,
+            },
+            {
+              onSuccess: () => {
+                setClaimUsdcModal(false);
+                refetchUsdcBalance();
               },
-            ],
-            capabilities,
-          });
-          refetch();
+            }
+          );
         },
       }
     );
@@ -127,24 +148,29 @@ const BaseWallet = () => {
 
     setLoading(true);
 
-    writeContracts({
-      contracts: [
-        {
-          address: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-          abi: USDCAbi,
-          functionName: "transfer",
-          args: [recipientAddress, convertPoints6Decimal(sendAmount)],
-        },
-      ],
-      capabilities,
-    });
+    writeContracts(
+      {
+        contracts: [
+          {
+            address: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+            abi: USDCAbi,
+            functionName: "transfer",
+            args: [recipientAddress, convertPoints6Decimal(sendAmount)],
+          },
+        ],
+        capabilities,
+      },
+      {
+        onSuccess: () => refetchUsdcBalance(),
+      }
+    );
 
     setLoading(false);
     setOpenUsdcTx(false);
   };
 
   // ETH
-  const { data: dataeth } = useBalance({
+  const { data: dataeth, refetch: refetchEthBalance } = useBalance({
     address: account.address,
   });
   const ethBalance = dataeth
@@ -174,24 +200,31 @@ const BaseWallet = () => {
 
     setLoading(true);
 
-    writeContracts({
-      contracts: [
-        {
-          address: "0x84767Daf924dC4c9FE429f75C7D6ad1E8493eC76",
-          abi: USDCAbi,
-          functionName: "transfer",
-          args: [recipientAddress, convertPoints(sendAmount)],
-        },
-      ],
-      capabilities,
-    });
+    writeContracts(
+      {
+        contracts: [
+          {
+            address: "0x84767Daf924dC4c9FE429f75C7D6ad1E8493eC76",
+            abi: USDCAbi,
+            functionName: "transfer",
+            args: [recipientAddress, convertPoints(sendAmount)],
+          },
+        ],
+        capabilities,
+      },
+      { onSuccess: () => refetchWldBalance() }
+    );
 
     setLoading(false);
     setOpenWldTx(false);
   };
 
   // Link
-  const { data: linkData, refetch: refetchLinkBalance } = useReadContract({
+  const {
+    data: linkData,
+    refetch: refetchLinkBalance,
+    fetchStatus,
+  } = useReadContract({
     abi: USDCAbi,
     address: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
     functionName: "balanceOf",
@@ -211,17 +244,25 @@ const BaseWallet = () => {
 
     setLoading(true);
 
-    writeContracts({
-      contracts: [
-        {
-          address: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
-          abi: USDCAbi,
-          functionName: "transfer",
-          args: [recipientAddress, convertPoints(sendAmount)],
+    writeContracts(
+      {
+        contracts: [
+          {
+            address: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
+            abi: USDCAbi,
+            functionName: "transfer",
+            args: [recipientAddress, convertPoints(sendAmount)],
+          },
+        ],
+        capabilities,
+      },
+      {
+        onSuccess: () => {
+          refetchLinkBalance();
+          console.log(fetchStatus, "here");
         },
-      ],
-      capabilities,
-    });
+      }
+    );
 
     setLoading(false);
     setOpenLinkTx(false);
@@ -243,9 +284,9 @@ const BaseWallet = () => {
   useEffect(() => {
     if (receipt) {
       // refetchNftData();
-      refetch();
+      refetchUsdcBalance();
     }
-  }, [receipt, refetch]);
+  }, [receipt, refetchUsdcBalance]);
 
   useEffect(() => {
     if (account?.address) {
@@ -255,10 +296,20 @@ const BaseWallet = () => {
 
   useEffect(() => {
     if (usdcData) {
-      refetch();
+      refetchUsdcBalance();
       localStorage.setItem("baseBalance", String(usdcBalance));
     }
   }, [usdcData, usdcBalance]);
+
+  const {
+    mutate: mutateUserTx,
+    data: userTxHistory,
+    isPending: getTxPending,
+  } = useUserTransactions();
+
+  const getUserTransactionHistory = () => {
+    mutateUserTx({ address: account.address as string });
+  };
 
   return (
     <div className="relative min-h-screen w-full text-black bg-white pb-24">
@@ -266,7 +317,7 @@ const BaseWallet = () => {
         <div className="h-screen flex flex-col items-center justify-center mx-auto bg-gradient-to-b from-white to-purple-100 p-4 sm:p-6">
           <ArrowLeft
             stroke="#939393"
-            onClick={() => router.back()}
+            onClick={() => router.push("/dashboard")}
             className="absolute top-6 left-6 flex cursor-pointer"
           />
           <div className="flex flex-col gap-2 items-center justify-center text-center">
@@ -318,17 +369,20 @@ const BaseWallet = () => {
                 />
               </div>
 
-              <div
-                onClick={() => setOpenIframeModal(true)}
-                className="max-w-fit mt-2 py-1 px-4 border border-[#7C56FE] text-xs text-[#7C56FE] font-medium rounded-full cursor-pointer"
+              <a
+                href="https://www.base.org/names"
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                Personalize wallet
-              </div>
+                <div className="max-w-fit mt-2 py-1 px-4 border border-[#7C56FE] text-xs text-[#7C56FE] font-medium rounded-full cursor-pointer">
+                  Personalize wallet
+                </div>
+              </a>
             </div>
 
             <CustomTokenUI
               tokenBalance={usdcBalance.toFixed(2)}
-              balanceUSD={usdcBalance * currentPrice}
+              balanceUSD={convertedUsdcBalance.toFixed(2)}
               token="USDC"
             />
 
@@ -362,22 +416,15 @@ const BaseWallet = () => {
                   Send
                 </div>
               </div>
-              {/* <div
-                onClick={() => console.log("")}
-                className="cursor-pointer w-full items-center justify-center flex flex-col gap-2"
-              >
-                <div className="w-full h-[70px] flex flex-col gap-1 items-center p-3 justify-center border border-[#D6CBFF] rounded-[12px] ">
-                  <ArrowDownUp stroke="#7C56FE" />
-                  Swap
-                </div>
-              </div> */}
             </div>
 
             <div className="w-full px-2 flex flex-row items-center justify-between gap-2 text-center text-sm font-bold rounded-[10px]">
               {tabs.map(({ label, value }) => (
                 <p
                   key={value}
-                  onClick={() => setSelectedTxTab(value)}
+                  onClick={() => {
+                    setSelectedTxTab(value), getUserTransactionHistory();
+                  }}
                   className="w-full py-2 px-2 text-center cursor-pointer"
                 >
                   <span
@@ -422,7 +469,17 @@ const BaseWallet = () => {
               )}
 
               {selectedTxTab === "activities" && (
-                <div>List of activities here</div>
+                <>
+                  {getTxPending && (
+                    <div className="flex items-center justify-center mx-auto h-[120px]">
+                      <SpinnerIcon />
+                    </div>
+                  )}
+
+                  {userTxHistory && (
+                    <TransactionHistory data={userTxHistory?.data} />
+                  )}
+                </>
               )}
             </div>
 
@@ -464,10 +521,15 @@ const BaseWallet = () => {
         value={sendAmount !== null ? sendAmount : ""}
         onChangeValue={setSendAmount}
         onTransfer={() =>
-          sendTransaction({
-            to: "0xd2135CfB216b74109775236E36d4b433F1DF507B",
-            value: parseEther("0.0001"),
-          })
+          sendTransaction(
+            {
+              to: "0xd2135CfB216b74109775236E36d4b433F1DF507B",
+              value: parseEther("0.0001"),
+            },
+            {
+              onSuccess: () => refetchEthBalance(),
+            }
+          )
         }
         loading={loading}
         assetLogo={"/images/ETH.png"}
@@ -535,20 +597,6 @@ const BaseWallet = () => {
                 {loading ? "Transferring..." : `Claim USDC`}
               </Button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {openIframeModal && (
-        <div className="fixed inset-0 flex items-center px-1 justify-center z-50 bg-[#0808086B] bg-opacity-50 flex-col">
-          <div
-            className="bg-white text-end rounded-full p-[2px]"
-            onClick={() => setOpenIframeModal(false)}
-          >
-            <X />
-          </div>
-          <div className="bg-white backdrop h-[95%] rounded-t-lg shadow-lg p-4 mx-1 max-w-[460px] w-full transition-transform transform translate-y-0">
-            <IframeComponent src="https://www.base.org/names" />
           </div>
         </div>
       )}

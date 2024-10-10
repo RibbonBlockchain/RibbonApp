@@ -6,7 +6,6 @@ import {
   FAQs,
   Balance,
   Profile,
-  Wallets,
   Feedback,
   ContactUs,
   PrivacyPolicy,
@@ -18,11 +17,6 @@ export const ProfileDetails = [
     href: "/account/personal-details",
     description: "Personal Details",
     logo: <Profile />,
-  },
-  {
-    href: "/wallet",
-    description: "Wallets",
-    logo: <Wallets />,
   },
   {
     href: "/account/balance&points",

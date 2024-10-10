@@ -6,13 +6,15 @@ import Menu, {
   RouteMenu,
   ProfileDetails,
 } from "@/containers/account/menu";
-import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Logout from "./sections/logout";
+import React, { useState } from "react";
 import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import User from "@/containers/account/user";
 import MoonSVG from "@/public/ReactSVG/moon";
-import { Scan, WorldID } from "@/public/images";
+import { Scan, Wallets, WorldID } from "@/public/images";
 import { ChevronRight, Sun } from "lucide-react";
 import SwitchButton from "@/containers/account/switch-button";
 import InviteFriends from "@/containers/account/invite-friends";
@@ -21,6 +23,13 @@ import AuthNavLayout from "@/containers/layout/auth/auth-nav.layout";
 const Account = () => {
   const [theme, setTheme] = React.useState(false);
   const handleWorldId = () => signIn("worldcoin");
+  const router = useRouter();
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
 
   return (
     <AuthNavLayout>
@@ -57,6 +66,50 @@ const Account = () => {
               <ChevronRight stroke="#6200EE" />
             </div>
             <hr />
+          </div>
+
+          <div className="relative w-full">
+            <div
+              onClick={toggleDropdown}
+              className="flex flex-row items-center justify-between py-3 px-[6px] "
+            >
+              <div className="flex flex-row items-center justify-center gap-3">
+                <Wallets />
+                <p className="text-base font-medium">Wallets</p>
+              </div>
+              <ChevronRight stroke="#6200EE" />
+            </div>
+            <hr />
+
+            {isDropdownOpen && (
+              <div className="absolute w-full bg-white border rounded-lg mt-2 py-1 shadow-lg z-10">
+                <div
+                  onClick={() => router.push("/wallet/base")}
+                  className="w-full flex flex-row gap-2 items-center py-2 px-4 cursor-pointer text-[#1577EA]"
+                >
+                  <Image
+                    alt="base"
+                    width={18}
+                    height={18}
+                    src={"/images/BASE.svg"}
+                  />
+                  BASE
+                </div>
+                <div className="border border-[#E5E7EB]" />
+                <div
+                  onClick={() => router.push("/wallet/optimism")}
+                  className="w-full flex flex-row gap-2 items-center py-2 px-4 cursor-pointer text-[#E81509]"
+                >
+                  <Image
+                    alt="op"
+                    width={18}
+                    height={18}
+                    src={"/images/optimism.svg"}
+                  />
+                  Optimism
+                </div>
+              </div>
+            )}
           </div>
 
           {ProfileDetails.map(({ href, description, logo }) => (

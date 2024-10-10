@@ -50,6 +50,10 @@ export type TWithdrawPointsBody = {
   amount: number;
 };
 
+export type TUserTransactionsBody = {
+  address: string;
+};
+
 export type TBaseClaimBody = {
   amount: number;
   address: string;

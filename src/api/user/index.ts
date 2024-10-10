@@ -8,6 +8,7 @@ import {
   TSubmitSurveyBody,
   TRateSurveyBody,
   TBaseClaimBody,
+  TUserTransactionsBody,
 } from "./types";
 import {
   getTasks,
@@ -36,6 +37,7 @@ import {
   rateSurvey,
   getCompletedSurveys,
   baseClaim,
+  userTransactions,
 } from "./req";
 import { onError } from "../api-client";
 import { TGetResponse } from "../auth/types";
@@ -301,5 +303,12 @@ export const useWithdrawPoints = () => {
   return useMutation({
     onError,
     mutationFn: (body: TWithdrawPointsBody) => withdrawPoints(body),
+  });
+};
+
+export const useUserTransactions = () => {
+  return useMutation({
+    onError,
+    mutationFn: (body: TUserTransactionsBody) => userTransactions(body),
   });
 };

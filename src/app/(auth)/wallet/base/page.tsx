@@ -1,6 +1,16 @@
 "use client";
 
-import { X, Copy, LogOut, ArrowUp, ArrowDown, ArrowLeft } from "lucide-react";
+import {
+  X,
+  Copy,
+  LogOut,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowUpLeft,
+  ArrowUpRight,
+  ArrowDownLeft,
+} from "lucide-react";
 import {
   useBalance,
   useWriteContract,
@@ -14,7 +24,7 @@ import { parseEther } from "viem";
 import TokenItem from "./token-item";
 import IframeComponent from "../iframe";
 import Button from "@/components/button";
-import { useBaseClaim } from "@/api/user";
+import { useBaseClaim, useUserTransactions } from "@/api/user";
 import { useRouter } from "next/navigation";
 import TransferModal from "./transfer-modal";
 import { copyToClipboard } from "@/lib/utils";
@@ -26,6 +36,8 @@ import CustomTokenUI from "@/components/wallet/native-token-ui";
 import { useCapabilities, useWriteContracts } from "wagmi/experimental";
 import { useAccount, useConnect, useDisconnect, useReadContract } from "wagmi";
 import { convertPoints, convertPoints6Decimal } from "@/lib/utils/convertPoint";
+import { SpinnerIcon } from "@/components/icons/spinner";
+import TransactionHistory from "../transaction-history";
 
 const tabs = [
   { label: "Tokens", value: "tokens" },
@@ -289,6 +301,16 @@ const BaseWallet = () => {
     }
   }, [usdcData, usdcBalance]);
 
+  const {
+    mutate: mutateUserTx,
+    data: userTxHistory,
+    isPending: getTxPending,
+  } = useUserTransactions();
+
+  const getUserTransactionHistory = () => {
+    mutateUserTx({ address: account.address as string });
+  };
+
   return (
     <div className="relative min-h-screen w-full text-black bg-white pb-24">
       {account.status === "disconnected" && (
@@ -394,22 +416,15 @@ const BaseWallet = () => {
                   Send
                 </div>
               </div>
-              {/* <div
-                onClick={() => console.log("")}
-                className="cursor-pointer w-full items-center justify-center flex flex-col gap-2"
-              >
-                <div className="w-full h-[70px] flex flex-col gap-1 items-center p-3 justify-center border border-[#D6CBFF] rounded-[12px] ">
-                  <ArrowDownUp stroke="#7C56FE" />
-                  Swap
-                </div>
-              </div> */}
             </div>
 
             <div className="w-full px-2 flex flex-row items-center justify-between gap-2 text-center text-sm font-bold rounded-[10px]">
               {tabs.map(({ label, value }) => (
                 <p
                   key={value}
-                  onClick={() => setSelectedTxTab(value)}
+                  onClick={() => {
+                    setSelectedTxTab(value), getUserTransactionHistory();
+                  }}
                   className="w-full py-2 px-2 text-center cursor-pointer"
                 >
                   <span
@@ -454,7 +469,17 @@ const BaseWallet = () => {
               )}
 
               {selectedTxTab === "activities" && (
-                <div>List of activities here</div>
+                <>
+                  {getTxPending && (
+                    <div className="flex items-center justify-center mx-auto h-[120px]">
+                      <SpinnerIcon />
+                    </div>
+                  )}
+
+                  {userTxHistory && (
+                    <TransactionHistory data={userTxHistory?.data} />
+                  )}
+                </>
               )}
             </div>
 

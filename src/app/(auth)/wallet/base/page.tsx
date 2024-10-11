@@ -1,16 +1,6 @@
 "use client";
 
-import {
-  X,
-  Copy,
-  LogOut,
-  ArrowUp,
-  ArrowDown,
-  ArrowLeft,
-  ArrowUpLeft,
-  ArrowUpRight,
-  ArrowDownLeft,
-} from "lucide-react";
+import { X, Copy, LogOut, ArrowUp, ArrowDown, ArrowLeft } from "lucide-react";
 import {
   useBalance,
   useWriteContract,
@@ -22,27 +12,21 @@ import React from "react";
 import Image from "next/image";
 import { parseEther } from "viem";
 import TokenItem from "./token-item";
-import IframeComponent from "../iframe";
 import Button from "@/components/button";
-import { useBaseClaim, useUserTransactions } from "@/api/user";
 import { useRouter } from "next/navigation";
 import TransferModal from "./transfer-modal";
 import { copyToClipboard } from "@/lib/utils";
 import { shorten } from "@/lib/utils/shorten";
 import { useEffect, useState, useMemo } from "react";
+import TransactionHistory from "../transaction-history";
+import { SpinnerIcon, SpinnerIconPurple } from "@/components/icons/spinner";
 import InputBox from "@/components/questionnarie/input-box";
+import { useBaseClaim, useUserBaseTransactions } from "@/api/user";
 import { useUsdcCoinDetails } from "@/lib/values/usdcPriceApi";
 import CustomTokenUI from "@/components/wallet/native-token-ui";
 import { useCapabilities, useWriteContracts } from "wagmi/experimental";
 import { useAccount, useConnect, useDisconnect, useReadContract } from "wagmi";
 import { convertPoints, convertPoints6Decimal } from "@/lib/utils/convertPoint";
-import { SpinnerIcon } from "@/components/icons/spinner";
-import TransactionHistory from "../transaction-history";
-
-const tabs = [
-  { label: "Tokens", value: "tokens" },
-  { label: "Activities", value: "activities" },
-];
 
 const BaseWallet = () => {
   const router = useRouter();
@@ -273,7 +257,6 @@ const BaseWallet = () => {
   const [openWldTx, setOpenWldTx] = useState(false);
   const [openLinkTx, setOpenLinkTx] = useState(false);
   const [claimUsdcModal, setClaimUsdcModal] = useState(false);
-  const [openIframeModal, setOpenIframeModal] = useState(false);
 
   const [recipientAddress, setRecipientAddress] = useState<string>("");
   const [sendAmount, setSendAmount] = useState<any>(null);
@@ -305,7 +288,7 @@ const BaseWallet = () => {
     mutate: mutateUserTx,
     data: userTxHistory,
     isPending: getTxPending,
-  } = useUserTransactions();
+  } = useUserBaseTransactions();
 
   const getUserTransactionHistory = () => {
     mutateUserTx({ address: account.address as string });
@@ -419,26 +402,41 @@ const BaseWallet = () => {
             </div>
 
             <div className="w-full px-2 flex flex-row items-center justify-between gap-2 text-center text-sm font-bold rounded-[10px]">
-              {tabs.map(({ label, value }) => (
-                <p
-                  key={value}
-                  onClick={() => {
-                    setSelectedTxTab(value), getUserTransactionHistory();
-                  }}
-                  className="w-full py-2 px-2 text-center cursor-pointer"
+              <p
+                onClick={() => {
+                  setSelectedTxTab("tokens");
+                }}
+                className="w-full py-2 px-2 text-center cursor-pointer"
+              >
+                <span
+                  className={clsx(
+                    "inline-block",
+                    selectedTxTab === "tokens"
+                      ? "text-[#6200EE] border-b-4 pb-3 border-[#6200EE]"
+                      : "border-b-4 pb-3 text-[#939393] border-[#fff]"
+                  )}
                 >
-                  <span
-                    className={clsx(
-                      "inline-block",
-                      selectedTxTab === value
-                        ? "text-[#6200EE] border-b-4 pb-3 border-[#6200EE]"
-                        : "border-b-4 pb-3 text-[#939393] border-[#fff]"
-                    )}
-                  >
-                    {label}
-                  </span>
-                </p>
-              ))}
+                  Tokens
+                </span>
+              </p>
+
+              <p
+                onClick={() => {
+                  setSelectedTxTab("activities"), getUserTransactionHistory();
+                }}
+                className="w-full py-2 px-2 text-center cursor-pointer"
+              >
+                <span
+                  className={clsx(
+                    "inline-block",
+                    selectedTxTab === "activities"
+                      ? "text-[#6200EE] border-b-4 pb-3 border-[#6200EE]"
+                      : "border-b-4 pb-3 text-[#939393] border-[#fff]"
+                  )}
+                >
+                  Activities
+                </span>
+              </p>
             </div>
 
             <div className="mt-2">
@@ -472,7 +470,7 @@ const BaseWallet = () => {
                 <>
                   {getTxPending && (
                     <div className="flex items-center justify-center mx-auto h-[120px]">
-                      <SpinnerIcon />
+                      <SpinnerIconPurple />
                     </div>
                   )}
 

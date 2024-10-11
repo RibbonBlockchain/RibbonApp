@@ -39,13 +39,18 @@ import { LogOut, WalletMoney } from "@/public/images";
 import { shorten } from "@/lib/utils/shorten";
 import { Web3AuthNoModal } from "@web3auth/no-modal";
 import { convertPoints } from "@/lib/utils/convertPoint";
-import { useClaimPoints, useSwapPoints, useWithdrawPoints } from "@/api/user";
+import {
+  useClaimPoints,
+  useSwapPoints,
+  useUserOptimismTransactions,
+  useWithdrawPoints,
+} from "@/api/user";
 import TokenTxUI from "@/components/wallet/wld-token-tx-ui";
 import BackArrowButton from "@/components/button/back-arrow";
 import CustomTokenUI from "@/components/wallet/native-token-ui";
 import { copyToClipboard } from "@/lib/utils";
 import { fetcher } from "@/lib/values/priceAPI";
-import { SpinnerIcon } from "@/components/icons/spinner";
+import { SpinnerIcon, SpinnerIconPurple } from "@/components/icons/spinner";
 import SwapPointToWorldToken from "@/components/modal/swap-points";
 import WithdrawWorldToken from "@/components/modal/withdraw-token";
 import PointsTokenTxUI from "@/components/wallet/point-token-tx-ui";
@@ -54,6 +59,7 @@ import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider";
 import WithdrawalProcessing from "@/components/modal/withdrawal-processing";
 import ClaimPointsModal from "@/components/modal/claim-point-modal";
 import { useGetAuth } from "@/api/auth";
+import TransactionHistory from "../transaction-history";
 
 const pointsABI = require("../../contract/pointsABI.json");
 
@@ -583,7 +589,7 @@ const OptimismWallet = () => {
     getWorldToken();
   }, [point, wldToken, pointName, worldTokenName, authenticateUser()]);
 
-  const [showWallet, setShowWallet] = useState(true);
+  const [selectedTab, setSelectedTab] = useState("tokens");
 
   const [sendTx, setSendTx] = useState(false);
   const [swapTx, setSwapTx] = useState(false);
@@ -614,331 +620,347 @@ const OptimismWallet = () => {
   const virtualBalance = user?.wallet.balance;
   const virtualPointBalance = virtualBalance * 5000;
 
+  const {
+    mutate: mutateUserTx,
+    data: userTxHistory,
+    isPending: getTxPending,
+  } = useUserOptimismTransactions();
+
+  const getUserTransactionHistory = () => {
+    mutateUserTx({ address: SAAddress });
+  };
+
   return (
     <>
-      {loggedIn ? (
-        <>
-          <div className="p-4 sm:p-6 min-h-screen bg-white flex flex-col">
-            <div className="mb-2 mt-4">
-              <ArrowLeft
-                stroke="#939393"
-                onClick={() => router.push("/dashboard")}
-                className="flex w-[40px] cursor-pointer"
-              />
+      {loggedIn && (
+        <div className="p-4 sm:p-6 min-h-screen bg-white flex flex-col">
+          <div className="mb-2 mt-4">
+            <ArrowLeft
+              stroke="#939393"
+              onClick={() => router.push("/dashboard")}
+              className="flex w-[40px] cursor-pointer"
+            />
 
-              <div className="flex -mt-6 text-black flex-row gap-2 items-center justify-center text-base font-semibold">
-                <Image
-                  alt="op"
-                  width={24}
-                  height={24}
-                  src={"/images/optimism.svg"}
-                />
-                Optimism Wallet
+            <div className="flex -mt-6 text-black flex-row gap-2 items-center justify-center text-base font-semibold">
+              <Image
+                alt="op"
+                width={24}
+                height={24}
+                src={"/images/optimism.svg"}
+              />
+              Optimism Wallet
+            </div>
+          </div>
+          {/* show pending tx */}
+          <div>
+            {showPending && (
+              <WithdrawalProcessing
+                isOpen={showPending}
+                closeModal={() => {
+                  setShowPending(false),
+                    toast.success("Transaction successful");
+                }}
+              />
+            )}
+          </div>
+
+          {/* open claim modal */}
+          <div>
+            {showClaimModal && (
+              <ClaimPointsModal
+                isOpen={showClaimModal}
+                closeModal={() => setShowClaimModal(false)}
+                handleClick={() => {
+                  setShowClaimModal(false);
+                  setShowPending(true), toast.success("Transaction initiated");
+                  claimPoints(
+                    {
+                      amount: convertPoints(Number(claimValue)),
+                      address: SAAddress,
+                    },
+                    { onSuccess: onClaimPointsSuccess }
+                  );
+                }}
+                setMaxAmount={() =>
+                  setClaimValue(virtualPointBalance.toString())
+                }
+                pointInput={claimValue}
+                handlePointInput={(e: any) => setClaimValue(e.target.value)}
+                isPending={pendingClaim}
+                pointsBalance={virtualPointBalance}
+              />
+            )}
+          </div>
+
+          {/* // swap points modal */}
+          <div>
+            {swapTx && (
+              <SwapPointToWorldToken
+                isOpen={swapTx}
+                isPending={isPending}
+                pointInput={swapValue}
+                setMaxAmount={() => setSwapValue(Number(point))}
+                USDvalue={(Number(swapValue) / 5000) * currentPrice}
+                pointsBalance={point}
+                wldBalance={wldToken}
+                closeModal={() => setSwapTx(false)}
+                handleClick={() => {
+                  swapPoints(
+                    {
+                      amount: convertPoints(Number(swapValue)),
+                      address: SAAddress,
+                    },
+                    { onSuccess: onSwapPointsSuccess }
+                  );
+                  setShowPending(true), toast.success("Transaction initiated");
+                }}
+                handlePointInput={(e) => setSwapValue(e.target.value)}
+              />
+            )}
+          </div>
+
+          {/* withdraw world token */}
+          <div>
+            {sendTx && (
+              <WithdrawWorldToken
+                isOpen={sendTx}
+                closeModal={() => setSendTx(false)}
+                handleClick={() => {
+                  setShowPending(true),
+                    toast.success("Transaction initiated"),
+                    sendWorldToken(destination, convertPoints(Number(amount)));
+                  setSendTx(false);
+                  setDestination("");
+                  setAmount("");
+                }}
+                destination={destination}
+                handleDestinationInput={(e) => setDestination(e.target.value)}
+                amount={amount}
+                handleAmountInput={(e) => setAmount(e.target.value)}
+                isPending={undefined}
+                wldTokenBalance={wldToken}
+                USDvalue={Number(amount) * currentPrice}
+              />
+            )}
+          </div>
+
+          {/* open point tx interface */}
+          <div>
+            {openPointTxPage && (
+              <PointsTokenTxUI
+                isOpen={openPointTxPage}
+                closeModal={() => setOpenPointTxPage(false)}
+                handleClick={() => setSwapTx(true)}
+                pointBalance={point}
+              />
+            )}
+          </div>
+
+          {/* open WLD tx interface */}
+          <div>
+            {openWLDTxPage && (
+              <TokenTxUI
+                isOpen={openWLDTxPage}
+                closeModal={() => setOpenWLDTxPage(false)}
+                handleClick={() => setSendTx(true)}
+                wldBalance={wldToken}
+                tokenName={"World (WLD)"}
+                tokenUnit={"WLD"}
+              />
+            )}
+          </div>
+
+          {/* open OP Sepolia tx interface */}
+          <div>
+            {openOPSepoiliaTxPage && (
+              <TokenTxUI
+                isOpen={openOPSepoiliaTxPage}
+                closeModal={() => setOpenOPSepoiliaTxPage(false)}
+                // handleClick={() => setSendTx(true)}
+                handleClick={() => {}}
+                wldBalance={balance}
+                tokenName={"OP Sepolia"}
+                tokenUnit={"ETH"}
+              />
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2 mb-10 overflow-hidden">
+            <div className="mt-4">
+              {/* <p className="text-center mb-1">Your smart account is below</p> */}
+              <div className="flex flex-row gap-5 items-center justify-center ">
+                <p className="text-[16px]">{shorten(SAAddress)}</p>
+                <p
+                  className="cursor-pointer"
+                  onClick={() => {
+                    copyToClipboard(SAAddress), toast.success(`copied`);
+                  }}
+                >
+                  <Copy stroke="#939393" size={16} />
+                </p>
               </div>
             </div>
-            {/* show pending tx */}
-            <div>
-              {showPending && (
-                <WithdrawalProcessing
-                  isOpen={showPending}
-                  closeModal={() => {
-                    setShowPending(false),
-                      toast.success("Transaction successful");
-                  }}
-                />
-              )}
-            </div>
 
-            {/* open claim modal */}
-            <div>
-              {showClaimModal && (
-                <ClaimPointsModal
-                  isOpen={showClaimModal}
-                  closeModal={() => setShowClaimModal(false)}
-                  handleClick={() => {
-                    setShowClaimModal(false);
-                    setShowPending(true),
-                      toast.success("Transaction initiated");
-                    claimPoints(
-                      {
-                        amount: convertPoints(Number(claimValue)),
-                        address: SAAddress,
-                      },
-                      { onSuccess: onClaimPointsSuccess }
-                    );
-                  }}
-                  setMaxAmount={() =>
-                    setClaimValue(virtualPointBalance.toString())
-                  }
-                  pointInput={claimValue}
-                  handlePointInput={(e: any) => setClaimValue(e.target.value)}
-                  isPending={pendingClaim}
-                  pointsBalance={virtualPointBalance}
-                />
-              )}
-            </div>
+            <CustomTokenUI
+              tokenBalance={wldToken}
+              balanceUSD={(Number(wldToken) * currentPrice).toFixed(5)}
+              token={"WLD"}
+            />
 
-            {/* // swap points modal */}
-            <div>
-              {swapTx && (
-                <SwapPointToWorldToken
-                  isOpen={swapTx}
-                  isPending={isPending}
-                  pointInput={swapValue}
-                  setMaxAmount={() => setSwapValue(Number(point))}
-                  USDvalue={(Number(swapValue) / 5000) * currentPrice}
-                  pointsBalance={point}
-                  wldBalance={wldToken}
-                  closeModal={() => setSwapTx(false)}
-                  handleClick={() => {
-                    swapPoints(
-                      {
-                        amount: convertPoints(Number(swapValue)),
-                        address: SAAddress,
-                      },
-                      { onSuccess: onSwapPointsSuccess }
-                    );
-                    setShowPending(true),
-                      toast.success("Transaction initiated");
-                  }}
-                  handlePointInput={(e) => setSwapValue(e.target.value)}
-                />
+            <button
+              onClick={() => setShowClaimModal(true)}
+              className={clsx(
+                "mt-5 w-full text-center py-3 text-white font-semibold bg-[#7C56FE] rounded-[16px]",
+                pendingClaim && "bg-gray-300"
               )}
-            </div>
-
-            {/* withdraw world token */}
-            <div>
-              {sendTx && (
-                <WithdrawWorldToken
-                  isOpen={sendTx}
-                  closeModal={() => setSendTx(false)}
-                  handleClick={() => {
-                    setShowPending(true),
-                      toast.success("Transaction initiated"),
-                      sendWorldToken(
-                        destination,
-                        convertPoints(Number(amount))
-                      );
-                    setSendTx(false);
-                    setDestination("");
-                    setAmount("");
-                  }}
-                  destination={destination}
-                  handleDestinationInput={(e) => setDestination(e.target.value)}
-                  amount={amount}
-                  handleAmountInput={(e) => setAmount(e.target.value)}
-                  isPending={undefined}
-                  wldTokenBalance={wldToken}
-                  USDvalue={Number(amount) * currentPrice}
-                />
-              )}
-            </div>
-
-            {/* open point tx interface */}
-            <div>
-              {openPointTxPage && (
-                <PointsTokenTxUI
-                  isOpen={openPointTxPage}
-                  closeModal={() => setOpenPointTxPage(false)}
-                  handleClick={() => setSwapTx(true)}
-                  pointBalance={point}
-                />
-              )}
-            </div>
-
-            {/* open WLD tx interface */}
-            <div>
-              {openWLDTxPage && (
-                <TokenTxUI
-                  isOpen={openWLDTxPage}
-                  closeModal={() => setOpenWLDTxPage(false)}
-                  handleClick={() => setSendTx(true)}
-                  wldBalance={wldToken}
-                  tokenName={"World (WLD)"}
-                  tokenUnit={"WLD"}
-                />
-              )}
-            </div>
-
-            {/* open OP Sepolia tx interface */}
-            <div>
-              {openOPSepoiliaTxPage && (
-                <TokenTxUI
-                  isOpen={openOPSepoiliaTxPage}
-                  closeModal={() => setOpenOPSepoiliaTxPage(false)}
-                  // handleClick={() => setSendTx(true)}
-                  handleClick={() => {}}
-                  wldBalance={balance}
-                  tokenName={"OP Sepolia"}
-                  tokenUnit={"ETH"}
-                />
-              )}
-            </div>
-
-            <div className="flex flex-col gap-2 mb-10 overflow-hidden">
-              <div className="mt-4">
-                {/* <p className="text-center mb-1">Your smart account is below</p> */}
-                <div className="flex flex-row gap-5 items-center justify-center ">
-                  <p className="text-[16px]">{shorten(SAAddress)}</p>
-                  <p
-                    className="cursor-pointer"
-                    onClick={() => {
-                      copyToClipboard(SAAddress), toast.success(`copied`);
-                    }}
-                  >
-                    <Copy stroke="#939393" size={16} />
-                  </p>
+            >
+              {pendingClaim ? (
+                <div className="flex self-center items-center justify-center">
+                  <SpinnerIcon />
                 </div>
+              ) : (
+                "Claim points"
+              )}
+            </button>
+
+            <div className="w-full pt-5 pb-10 flex gap-4 items-center justify-between">
+              <div
+                onClick={() => router.push("/wallet/optimism/receive")}
+                className="cursor-pointer w-full py-6 items-center justify-center flex flex-col gap-3 border border-[#D6CBFF] rounded-[12px]  "
+              >
+                <ArrowDown stroke="#7C56FE" />
+                Recieve
               </div>
+              <div
+                onClick={() => setSendTx(true)}
+                className="cursor-pointer w-full py-6 items-center justify-center flex flex-col gap-3 border border-[#D6CBFF] rounded-[12px]  "
+              >
+                <ArrowUp stroke="#7C56FE" />
+                Send
+              </div>
+              <div
+                onClick={() => setSwapTx(true)}
+                className="cursor-pointer w-full py-6 items-center justify-center flex flex-col gap-3 border border-[#D6CBFF] rounded-[12px]"
+              >
+                <ArrowDownUp stroke="#7C56FE" />
+                Swap
+              </div>
+            </div>
 
-              <CustomTokenUI
-                tokenBalance={wldToken}
-                balanceUSD={(Number(wldToken) * currentPrice).toFixed(5)}
-                token={"WLD"}
-              />
-
-              <button
-                onClick={() => setShowClaimModal(true)}
+            <div className="w-full bg-[#F5F5F5] px-2 py-2 flex flex-row items-center justify-between gap-2 rounded-[18px] ">
+              <p
+                onClick={() => setSelectedTab("tokens")}
                 className={clsx(
-                  "mt-5 w-full text-center py-3 text-white font-semibold bg-[#7C56FE] rounded-[16px]",
-                  pendingClaim && "bg-gray-300"
+                  "w-full text-center py-3 text-black",
+                  selectedTab === "tokens" &&
+                    "text-white bg-[#7C56FE] rounded-[16px]"
                 )}
               >
-                {pendingClaim ? (
-                  <div className="flex self-center items-center justify-center">
-                    <SpinnerIcon />
-                  </div>
-                ) : (
-                  "Claim points"
+                Tokens
+              </p>
+              <p
+                onClick={() => {
+                  setSelectedTab("activities"), getUserTransactionHistory();
+                }}
+                className={clsx(
+                  "w-full text-center py-3 text-black",
+                  selectedTab === "activities" &&
+                    "text-white bg-[#7C56FE] rounded-[16px]"
                 )}
-              </button>
+              >
+                Activity
+              </p>
+            </div>
 
-              <div className="w-full pt-5 pb-10 flex gap-4 items-center justify-between">
-                <div
-                  onClick={() => router.push("/wallet/optimism/receive")}
-                  className="cursor-pointer w-full py-6 items-center justify-center flex flex-col gap-3 border border-[#D6CBFF] rounded-[12px]  "
-                >
-                  <ArrowDown stroke="#7C56FE" />
-                  Recieve
-                </div>
-                <div
-                  onClick={() => setSendTx(true)}
-                  className="cursor-pointer w-full py-6 items-center justify-center flex flex-col gap-3 border border-[#D6CBFF] rounded-[12px]  "
-                >
-                  <ArrowUp stroke="#7C56FE" />
-                  Send
-                </div>
-                <div
-                  onClick={() => setSwapTx(true)}
-                  className="cursor-pointer w-full py-6 items-center justify-center flex flex-col gap-3 border border-[#D6CBFF] rounded-[12px]"
-                >
-                  <ArrowDownUp stroke="#7C56FE" />
-                  Swap
-                </div>
-              </div>
-
-              <div className="w-full bg-[#F5F5F5] px-2 py-2 flex flex-row items-center justify-between gap-2 rounded-[18px] ">
-                <p
-                  onClick={() => setShowWallet(true)}
-                  className={clsx(
-                    "w-full text-center py-3 text-black",
-                    showWallet && "text-white bg-[#7C56FE] rounded-[16px]"
-                  )}
-                >
-                  Tokens
-                </p>
-                <p
-                  onClick={() => setShowWallet(false)}
-                  className={clsx(
-                    "w-full text-center py-3 text-black bg-[#7C56FE] rounded-[16px]",
-                    showWallet && "text-black bg-[inherit]"
-                  )}
-                >
-                  Activity
-                </p>
-              </div>
-
-              <div className="w-[inherit]">
-                {showWallet ? (
-                  <>
-                    <div className="flex flex-col gap-4 mt-6">
-                      {/* // points token */}
-                      <div
-                        onClick={() => setOpenPointTxPage(true)}
-                        className="flex flex-row items-center justify-between p-3 border border-[#D6CBFF] rounded-[12px]"
-                      >
-                        <div className="flex flex-row items-center justify-center gap-2">
-                          <div className="w-[35px] h-[35px] flex items-center ">
-                            <Image
-                              width={35}
-                              height={35}
-                              src={"/images/ribbon.svg"}
-                              alt="coin logo"
-                              className="rounded-full"
-                            />
-                          </div>
-                          <div>
-                            <p className="text-base font-normal">PTS</p>
-                            <p className="text-xs text-[#626262]">
-                              {pointName}
-                            </p>
-                          </div>
+            <div>
+              {selectedTab === "tokens" && (
+                <div>
+                  <div className="flex flex-col gap-4 mt-6">
+                    {/* // points token */}
+                    <div
+                      onClick={() => setOpenPointTxPage(true)}
+                      className="flex flex-row items-center justify-between p-3 border border-[#D6CBFF] rounded-[12px]"
+                    >
+                      <div className="flex flex-row items-center justify-center gap-2">
+                        <div className="w-[35px] h-[35px] flex items-center ">
+                          <Image
+                            width={35}
+                            height={35}
+                            src={"/images/ribbon.svg"}
+                            alt="coin logo"
+                            className="rounded-full"
+                          />
                         </div>
-                        <p className="text-sm">{point} points</p>
+                        <div>
+                          <p className="text-base font-normal">PTS</p>
+                          <p className="text-xs text-[#626262]">{pointName}</p>
+                        </div>
                       </div>
+                      <p className="text-sm">{point} points</p>
+                    </div>
 
-                      {/* // world token */}
-                      <div
-                        onClick={() => setOpenWLDTxPage(true)}
-                        className="flex flex-row items-center justify-between p-3 border border-[#D6CBFF] rounded-[12px]"
-                      >
-                        <div className="flex flex-row items-center justify-center gap-2">
-                          <div className="w-[35px] h-[35px] flex items-center ">
-                            <Image
-                              width={35}
-                              height={35}
-                              src={"/images/world-coin.png"}
-                              alt="coin logo"
-                              className="rounded-full"
-                            />
-                          </div>
-                          <div>
-                            <p className="text-base font-normal">
-                              {worldTokenName}
-                            </p>
-                            <p className="text-xs text-[#626262]">
-                              {worldTokenName}
-                            </p>
-                          </div>
+                    {/* // world token */}
+                    <div
+                      onClick={() => setOpenWLDTxPage(true)}
+                      className="flex flex-row items-center justify-between p-3 border border-[#D6CBFF] rounded-[12px]"
+                    >
+                      <div className="flex flex-row items-center justify-center gap-2">
+                        <div className="w-[35px] h-[35px] flex items-center ">
+                          <Image
+                            width={35}
+                            height={35}
+                            src={"/images/world-coin.png"}
+                            alt="coin logo"
+                            className="rounded-full"
+                          />
                         </div>
-                        <div className="text-end">
-                          <p className="text-sm font-normal">{wldToken} WLD</p>
+                        <div>
+                          <p className="text-base font-normal">
+                            {worldTokenName}
+                          </p>
                           <p className="text-xs text-[#626262]">
-                            {Number(wldToken) * currentPrice} USD
+                            {worldTokenName}
                           </p>
                         </div>
                       </div>
+                      <div className="text-end">
+                        <p className="text-sm font-normal">{wldToken} WLD</p>
+                        <p className="text-xs text-[#626262]">
+                          {Number(wldToken) * currentPrice} USD
+                        </p>
+                      </div>
                     </div>
-
-                    <div className="flex my-20 items-center justify-center">
-                      <button
-                        onClick={logout}
-                        className="flex flex-row items-center justify-center gap-2 px-4 py-2 w-fit font-semibold text-red-500 rounded hover:bg-red-300 mr-2 mt-4"
-                      >
-                        Log out wallet <LogOut />
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center flex items-center justify-center mt-6 h-[200px]">
-                    Your list of transactions will be displayed here
                   </div>
-                )}
-              </div>
+
+                  <div className="flex my-20 items-center justify-center">
+                    <button
+                      onClick={logout}
+                      className="flex flex-row items-center justify-center gap-2 px-4 py-2 w-fit font-semibold text-red-500 rounded hover:bg-red-300 mr-2 mt-4"
+                    >
+                      Log out wallet <LogOut />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {selectedTab === "activities" && (
+                <div className="flex flex-col self-start items-start mt-6 h-auto">
+                  {getTxPending && (
+                    <div className="flex items-center justify-center mx-auto h-[120px]">
+                      <SpinnerIconPurple />
+                    </div>
+                  )}
+                  {userTxHistory && (
+                    <TransactionHistory data={userTxHistory?.data} />
+                  )}
+                </div>
+              )}
             </div>
           </div>
-        </>
-      ) : (
+        </div>
+      )}
+
+      {!loggedIn && (
         <div className="flex flex-col p-4 sm:p-6 h-screen bg-cover bg-walletBg">
           <div className="mb-6">
             <BackArrowButton

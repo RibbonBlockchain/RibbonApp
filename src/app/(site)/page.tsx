@@ -20,7 +20,7 @@ const Home = () => {
             Welcome to <span className="text-gradient">Ribbon</span> Protocol
           </h1>
           <p className="text-base font-normal text-slate-600 text-center">
-            Earn tokenized Universal Basic Income
+            Earn Personalized Universal Basic Income
           </p>
         </div>
       </div>
@@ -35,13 +35,13 @@ const Home = () => {
 
         <WorldIdButton>Sign In with World ID</WorldIdButton>
 
-        <Link
+        <LinkButton
           href="/auth/login"
           className="text-sm font-normal text-[#141414] text-center"
         >
           Already an existing user?{" "}
-          <span className="text-[#6200EE] font-semibold">Sign In</span>
-        </Link>
+          <span className="text-[#6200EE] font-semibold">Log In</span>
+        </LinkButton>
       </div>
     </div>
   );
